@@ -3,7 +3,7 @@
 AWGL seeks to take care of some of the more common and tedious housekeeping-related tasks common to WebGL, with a particular emphasis on readibility, brevity, and ease of use. Note that the library is still in the very early stages of development, and definitely not ready for real-world use.
 
 ### Demo
-* [planeview] - Demonstrates AWGL usage with a dynamically generated and adjustable mesh.
+* [planeview] - demonstrates AWGL usage with a dynamically generated and adjustable mesh.
 
 ### Usage
 In order to minimize necessary function calls, all arguments are passed using an object-literal syntax that allows for a variable number of arguments. Scene elements are declared and referenced by through the usage of symbols. For instance, when declaring meshes:
