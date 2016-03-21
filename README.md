@@ -1,6 +1,6 @@
 # awgl.js
 ### A WebGL utility library
-AWGL seeks to take care of some of the more common and tedious housekeeping-related tasks common to WebGL, with a particular emphasis on readibility, brevity, and ease-of-use. Note that the library is still in the very early stages of development, and  not ready for real-world use.
+AWGL seeks to take care of some of the more common and tedious housekeeping-related tasks common to WebGL, with an emphasis on readibility, brevity, and ease-of-use. Note that the library is still in the very early stages of development, and  not ready for real-world use.
 
 ### Demo
 * [planeview] - demonstrates usage with a dynamically generated and adjustable mesh.
