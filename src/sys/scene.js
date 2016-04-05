@@ -114,7 +114,7 @@ class Scene {
 	this._gl.enable(this._gl.DEPTH_TEST);
     }
 
-    _init_light(light_sys, light){
+    _init_light_(light_sys, light){
 	this._lights.push(new Light(this._gl, this._lights.length, light_sys, light));
     }
 
@@ -196,7 +196,7 @@ class Scene {
 		lights_tmp.push(lights[light_sys][light]);
 	    }
 	    self._init_(lights_tmp.length, self._materials.length);
-	    lights_tmp.map(function(x){self._init_light(light_sys, x)});
+	    lights_tmp.map(function(x){self._init_light_(light_sys, x)});
 
 	}
 	
@@ -318,6 +318,7 @@ class Scene {
 	this._gl.viewport(0,0, this._gl.drawingBufferWidth, this._gl.drawingBufferHeight);
 
         if(this._meshes_mutable){
+	    
             //Bind dynamic buffer
 	    gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers[1]);
 	    bind_attrib(gl, 'a_Position', 3, gl.FLOAT, FSIZE*3, 0);
@@ -350,6 +351,7 @@ class Scene {
             }
 	}
         if(this._meshes_fixed){
+	    
             //Bind static buffer
 	    gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers[0]);
 	    bind_attrib(gl, 'a_Position', 3, gl.FLOAT, FSIZE*3, 0);
@@ -378,9 +380,9 @@ class Scene {
         }
 
 	this.__last_draw_stack__ = this.__draw_stack__;
-//	this._draw_hud(); 
     }
 
+    // Exploratory -> May just be better to use CSS/HTML. 
     _draw_hud(){
 	let mat4_mvp = new Matrix4();
 	let mat4_view = new Matrix4();
@@ -389,13 +391,13 @@ class Scene {
 	let vpAspect = (this._gl.drawingBufferWidth)/(this._gl.drawingBufferHeight); 
 
 	if (vpAspect >= 1){ //When width > height
-	    mat4_mvp.setOrtho(-vpAspect*zoom, vpAspect*zoom, // left,right;
-  			       -zoom, zoom, 	                          	 // bottom, top;
-  			       0, 100);			 	 // near, far; (always >=0)
+	    mat4_mvp.setOrtho(-vpAspect*zoom, vpAspect*zoom,
+  			       -zoom, zoom, 	                          
+  			       0, 100);			 	
 	} else {
-	    mat4_mvp.setOrtho(-zoom, zoom, 	   	 // left,right;
-  			       -1/vpAspect*zoom, 1/vpAspect*zoom, 		 // bottom, top;
-  			      0, 100);				 // near, far; (always >=0)
+	    mat4_mvp.setOrtho(-zoom, zoom, 	   	
+  			       -1/vpAspect*zoom, 1/vpAspect*zoom, 		 
+  			      0, 100);				
 	}
 
 	mat4_view.setLookAt( 6,0,0, 0,0,0, 0,0,1);
