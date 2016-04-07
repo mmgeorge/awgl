@@ -1,5 +1,9 @@
 'use strict';
 
+/** Utility functions for AWGL. 
+    Time-stamp: <2016-04-07 15:38:59> */
+
+/** Constants */
 var FSIZE, ISIZE;
 var FLOATSPERVERTEX = 3;
 
@@ -12,26 +16,75 @@ const TRIANGLES = 0x0004;
 const TRIANGLE_STRIP = 0x0005;
 const TRIANGLE_FAN = 0x0006; 
 
-class Time {
-    constructor(){
-	this._last = Date.now();
-	this._now;
-    }
-    get dT(){
-	let dT;
-	this._now = Date.now();
-	dT = this._now - this._last;
-	this._last = Date.now();
-	return dT;
-	
-    }
-    
-}
+/** Reserved Namespaces */
+var _SHDR = {
+    MODEL : 0,
+    PARTICLE : 1,
+};
 
+/** Add a global symbol */
 function add_global_sym(sym, index){
     let to_eval = 'window.'.concat(sym).concat('=').concat(index);
     eval(to_eval); 
 }
+
+/** SHADER CREATION /
+    INITIALIZATION
+------------------------------------- */
+
+/** Set shader program */
+function set_shader(gl, shader){
+    gl.useProgram(shader);
+    gl.program = shader;
+}
+
+/** Create a shader program */
+function mk_shader(gl, vshdr, fshdr){
+    let vshader = compile_shader(gl, gl.VERTEX_SHADER, vshdr);
+    let fshader = compile_shader(gl, gl.FRAGMENT_SHADER, fshdr);
+    if (!vshader || !fshader) throw new Error ("Error compiling shaders!");
+
+    let shdr_program = gl.createProgram();
+    if (!shdr_program) throw new Error ("Could not create shader program!");
+
+    gl.attachShader(shdr_program, vshader);
+    gl.attachShader(shdr_program, fshader);
+    gl.linkProgram(shdr_program);
+
+    let linked = gl.getProgramParameter(shdr_program, gl.LINK_STATUS);
+    if (!linked) throw new Error ("Could not link program!");
+
+    return shdr_program; 
+}
+
+/** Compile a shader */
+function compile_shader(gl, type, src){
+    let shdr = gl.createShader(type);
+    if (!shdr) throw new Error("Could not create shader!");
+
+    gl.shaderSource(shdr, src);
+    gl.compileShader(shdr);
+
+    let compiled = gl.getShaderParameter(shdr, gl.COMPILE_STATUS);
+    if (!compiled){
+	let error = gl.getShaderInfoLog(shdr); 
+	throw new Error ("Unable to compile shader: \n" + error);
+    }
+
+    return shdr; 
+}
+
+/** Initialize a WebGL Context. 
+    Option arg debug for WebGL debugging */
+function init_context(canvas, debug){
+    let gl = WebGLUtils.setupWebGL(canvas);
+    if (!gl) throw new Error("Could not setup gl context!");
+    if (debug) gl = WebGLDebugUtils.makeDebugContext(gl); 
+}
+
+/** BUFFER CREATION/
+    INITIALIZATION 
+------------------------------------- */
 
 function init_buffer (gl, data, type){
     let buf = gl.createBuffer();   // Create a buffer object
@@ -48,3 +101,5 @@ function bind_attrib (gl, attrib, num, type, stride, offset ){
     gl.enableVertexAttribArray(attribute);
 
 }
+
+

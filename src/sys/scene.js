@@ -7,6 +7,10 @@
 
 'use strict';
 
+
+
+
+/** Root class, container for all aspects of the scene */
 class Scene {
     constructor (canvas){
 	//public
@@ -18,6 +22,7 @@ class Scene {
 
 	//private
 	this._gl;
+	this._shaders = [];
 	this._lights = [];
 	this._models = [];
 	this._materials = []; 
@@ -44,42 +49,55 @@ class Scene {
 	this._uL_mutable; 
     }
 
+    /** Buffer Accessors */
     get _static_buffer(){
 	if (this._buffers[0]){
-	    return this._buffers[0]
+	    return this._buffers[0];
 	}
 	else {
-	    throw new Error('The static buffer is not initialized!')
+	    throw new Error('The static buffer is not initialized!');
 	}
     }
-
     get _dynamic_buffer(){
 	if (this._buffers[1]){
-	    return this._buffers[1]
+	    return this._buffers[1];
 	}
 	else {
-	    throw new Error('The dynamic buffer is not initialized!')
+	    throw new Error('The dynamic buffer is not initialized!');
+	}
+    }
+    get _index_buffer (){
+	if (this._buffers[2]){
+	    return this._buffers[2];
+	}
+	else {
+	    throw new Error('The index buffer is not initialized!');
 	}
     }
 
-    get _index_buffer (){
-	if (this._buffers[2]){
-	    return this._buffers[2]
-	}
-	else {
-	    throw new Error('The index buffer is not initialized!')
-	}
+    /** Switches  */
+    _use_shader(shdr){
+	switch(shdr){
+	case _SHDR.MODEL:
+	    set_shader(this._gl, this._shaders[_SHDR.MODEL]);
+	    break; 
+	case _SHDR.PARTICLE:
+	    set_shader(this._gl, this._shaders[_SHDR.PARTICLES]);
+	    break;
+	default:
+	    throw new Error(shdr + " is not a valid shader!");
+	}	
     }
     
+    /** @Initialization */
     _init_(n_lights, n_mats){
 	this._gl = this.canvas.getContext("webgl",{stencil:true} );
 	if (!this._gl) {
-	    throw new Error('Failed to get the rendering context.')
+	    throw new Error('Failed to get the rendering context.');
 	}
 
 	this._gl.getExtension("OES_standard_derivatives");
 	this._gl.getExtension("OES_element_index_uint");
-
 
 	this._init_shaders_(n_lights, n_mats);
 	this._init_mats_();
@@ -88,17 +106,15 @@ class Scene {
 	this._init_index_buffer_(this._gl);
 	this._init_scene_();
     }
-
     _init_shaders_(n_lights, n_mats){
 	FSHADER_SOURCE =
 	    "#define READ_SRC 1 \n" +
 	    "#define NUM_LIGHTS " + n_lights + " \n" +
 	    "#define NUM_MATERIALS " + n_mats + " \n" + FSHADER_SOURCE;
-	if (!initShaders(this._gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-	    throw new Error('Failed to intialize shaders.');
-	}
+	
+	this._shaders[0] = mk_shader(this._gl, VSHADER_SOURCE, FSHADER_SOURCE);
+	this._use_shader(_SHDR.MODEL); 
     }
-    
     _init_locations_(){
 	this._uL_mat4_model = this._gl.getUniformLocation(this._gl.program, 'u_ModelMatrix');
 	this._uL_mat4_mvp = this._gl.getUniformLocation(this._gl.program, 'u_MvpMatrix');
@@ -108,21 +124,17 @@ class Scene {
 	        throw new Error("Failed to get scene storage locations");
 	   }
     }
-    
     _init_scene_(){
 	this._gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	this._gl.enable(this._gl.DEPTH_TEST);
     }
-
     _init_light_(light_sys, light){
 	this._lights.push(new Light(this._gl, this._lights.length, light_sys, light));
     }
-
     _init_camera(position, lookAt, up){
 	this.camera = new Camera(this._gl, position, lookAt, up);
 	
     }
-
     _init_mats_(){
 	let tmp_mats = this._materials;
 	this._materials = []; 
@@ -134,11 +146,9 @@ class Scene {
 	}
 	
     }
-
     _set_light(index, values){
 	this._lights[index].set(values);
     }
-
     _init_array_buffers_(gl){
 	let positions;
 	
@@ -159,7 +169,6 @@ class Scene {
 	}
 
     }
-    
     _init_index_buffer_(gl, indicies_static, indicies_mut){
 	let ind = []; 
 	if (this._meshes_fixed){
@@ -181,6 +190,9 @@ class Scene {
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indicies, gl.STATIC_DRAW);
     }
 
+    
+    /** Initialize the scene. 
+        Required args: lights, models, camera */
     init(args){
 	let lights  = args.lights  || false;
 	let models = args.models || false;
@@ -192,7 +204,7 @@ class Scene {
 	    let lights_tmp = []; // Store light models so we can delay execution
 	    for (let light in lights[light_sys]){
 		add_global_sym(light, self._symtbl_lights.length);
-		self._symtbl_lights.push(light)
+		self._symtbl_lights.push(light);
 		lights_tmp.push(lights[light_sys][light]);
 	    }
 	    self._init_(lights_tmp.length, self._materials.length);
@@ -206,15 +218,16 @@ class Scene {
 	    self._models.push(new Model(models[model]));
 	}
 	
-	self.__draw_stack__ = Array(self._models.length)
+	self.__draw_stack__ = Array(self._models.length);
 	
 	self._camera = new Camera(self._gl, camera); 
 	
     }
 
+    /** Define scene materials. Must call prior to init. */
     defmat(args){
 	if (this._symtbl_mats.length){
-	    throw new Error('Materials have already been initialized!')
+	    throw new Error('Materials have already been initialized!');
 	}
 	let mats_tmp = []; 
 	for (let material in args){
@@ -226,6 +239,8 @@ class Scene {
 	}
     }
 
+    /** Define scene meshes. Must call prior to init. 
+        Optional args: fixed, mutable */
     defmesh(args){
 	let fixed = args.fixed || false;
 	let mutable = args.mutable || false;
@@ -233,7 +248,7 @@ class Scene {
 	let self = this; 
 	
 	if (self._symtbl_meshes.length){
-	    throw new Error('Meshes have already been initialized!')
+	    throw new Error('Meshes have already been initialized!');
 	}
 
 	if(fixed){
@@ -293,14 +308,15 @@ class Scene {
         let gl = this._gl;
         
         if (meshes){
-            gl.bindBuffer(gl.ARRAY_BUFFER, this._dynamic_buffer)
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._dynamic_buffer);
             for (let mesh in meshes){
                 //we only want the verticies
-                gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(meshes[mesh][0]))
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(meshes[mesh][0]));
             }
         }
     }
 
+    /** Push a new model matrix onto the draw stack. */
     draw (symbol, mat4_model){
 	this.__draw_stack__[symbol] = mat4_model; 
 
@@ -311,6 +327,7 @@ class Scene {
 
     }
 
+    /** Render the scene. Draws all elements. */
     render(){
 	let gl = this._gl;
 	let mat4_mvp = new Matrix4();
@@ -382,7 +399,6 @@ class Scene {
 	this.__last_draw_stack__ = this.__draw_stack__;
     }
 
-    // Exploratory -> May just be better to use CSS/HTML. 
     _draw_hud(){
 	let mat4_mvp = new Matrix4();
 	let mat4_view = new Matrix4();

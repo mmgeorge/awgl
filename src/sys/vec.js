@@ -1,6 +1,6 @@
 "use strict";
 // Additional WebGL Utilities
-// Time-stamp: <2016-04-05 19:54:32>
+// Time-stamp: <2016-04-05 20:08:26>
 
 
 class vec3 {
@@ -40,7 +40,7 @@ class vec3 {
 	return new vec3(map(op('*', -1), vec.xyz));
     }
     
-    static magnitude(vec){
+    static length(vec){
 	return Math.sqrt(reduce(function(x,y){return x+y}, map(op('pow', 2), vec.xyz))); 
     }
     
@@ -57,20 +57,34 @@ class vec3 {
 	    ((l1[0]*l2[1])-(l1[1]*l2[0])));
     }
     
-    static add(va, vb){
-	var tmp = new Float32Array(3);
-	for (var x=0; x<3; x++){
-	    tmp[x]=va.elements[x]+vb.elements[x];
+    static add(va, b){
+	// Vector addition 
+	if (typeof b === "object") {
+	    var tmp = new Float32Array(3);
+	    for (var x=0; x<3; x++){
+		tmp[x]=va.elements[x]+b.elements[x];
+	    }
+	    return new vec3(tmp[0], tmp[1], tmp[2]);
 	}
-	return new vec3(tmp[0], tmp[1], tmp[2]);
+	// Scalar addition
+	else {
+	    return new vec3(map(op("+", b), va.xyz)); 
+	}
     }
     
-    static subtract(va, vb){
-	let tmp = new Float32Array(3);
-	for (let x=0; x<3; x++){
-	    tmp[x]=va.elements[x]-vb.elements[x];
+    static subtract(va, b){
+	// Vector subtraction
+	if (typeof b === "object") {
+	    let tmp = new Float32Array(3);
+	    for (let x=0; x<3; x++){
+		tmp[x]=va.elements[x]-b.elements[x];
+	    }
+	    return new vec3(tmp[0], tmp[1], tmp[2]);
 	}
-	return new vec3(tmp[0], tmp[1], tmp[2]);
+	// Scalar subtraction
+	else {
+	   return new vec3(map(op("-", b), va.xyz));    
+	}
     }
 
     static scale(vec, scalar){

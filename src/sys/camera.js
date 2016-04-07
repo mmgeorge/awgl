@@ -138,7 +138,7 @@ class Camera{
 	this._dist = vec3.create();
 	if (this.moving){
 	    if (this._w){        
-		this._dist = vec3.multiply(vec3.subtract(this.lookAt,this.position), vel);
+		this._dist = vec3.scale(vec3.subtract(this.lookAt,this.position), vel);
 		this.position = vec3.add(this.position, this._dist);
 		this.lookAt = vec3.add(this.lookAt, this._dist);
 
@@ -152,7 +152,7 @@ class Camera{
 		this.lookAt.elements[1] = this.position.elements[1] + (len * Math.sin(this._angle));
 		
 	    }  if (this._s) { 
-		this._dist = vec3.multiply(vec3.subtract(this.lookAt,this.position), vel);
+		this._dist = vec3.scale(vec3.subtract(this.lookAt,this.position), vel);
 		this.position = vec3.subtract(this.position, this._dist);
 		this.lookAt = vec3.subtract(this.lookAt, this._dist);
 
