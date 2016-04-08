@@ -2,13 +2,8 @@
 // AGL - Another WebGL library 
 // Matt George 
 // -------------------------------------
-// TODO:
-// uL_light_sys
 
 'use strict';
-
-
-
 
 /** Root class, container for all aspects of the scene */
 class Scene {
@@ -31,6 +26,8 @@ class Scene {
 	this._camera;
 	this._buffers = Array(null,null,null); 
 
+	this._particle_sys = [];
+	
 	this._symtbl_lights = [];
 	this._symtbl_mats = []; 
 	this._symtbl_meshes = [];
@@ -75,18 +72,8 @@ class Scene {
 	}
     }
 
-    /** Switches  */
-    _use_shader(shdr){
-	switch(shdr){
-	case _SHDR.MODEL:
-	    set_shader(this._gl, this._shaders[_SHDR.MODEL]);
-	    break; 
-	case _SHDR.PARTICLE:
-	    set_shader(this._gl, this._shaders[_SHDR.PARTICLES]);
-	    break;
-	default:
-	    throw new Error(shdr + " is not a valid shader!");
-	}	
+   _use_shader(shdr){
+	set_shader(this._gl, this._shaders[shdr]);
     }
     
     /** @Initialization */
@@ -112,7 +99,7 @@ class Scene {
 	    "#define NUM_LIGHTS " + n_lights + " \n" +
 	    "#define NUM_MATERIALS " + n_mats + " \n" + FSHADER_SOURCE;
 	
-	this._shaders[0] = mk_shader(this._gl, VSHADER_SOURCE, FSHADER_SOURCE);
+	this._shaders.push(mk_shader(this._gl, VSHADER_SOURCE, FSHADER_SOURCE));
 	this._use_shader(_SHDR.MODEL); 
     }
     _init_locations_(){
@@ -144,7 +131,6 @@ class Scene {
 					      this._materials.length,
 					      mat[0],mat[1],mat[2], mat[3], mat[4])); 
 	}
-	
     }
     _set_light(index, values){
 	this._lights[index].set(values);
@@ -224,6 +210,11 @@ class Scene {
 	
     }
 
+    /** !TMP: Add a new particle system to scene */
+    add_particle_sys(count){
+	this._particle_sys.push(new Particle_Sys(this, count));
+    }
+    
     /** Define scene materials. Must call prior to init. */
     defmat(args){
 	if (this._symtbl_mats.length){
@@ -319,18 +310,20 @@ class Scene {
     /** Push a new model matrix onto the draw stack. */
     draw (symbol, mat4_model){
 	this.__draw_stack__[symbol] = mat4_model; 
-
     }
 
     drawUI (symbol, mat4_model){
 	this._UI_ELEMENTS_[symbol] = mat4_model; 
-
     }
 
     /** Render the scene. Draws all elements. */
     render(){
 	let gl = this._gl;
 	let mat4_mvp = new Matrix4();
+
+	// Use MODEL Program
+	this._use_shader(_SHDR.MODEL); 
+
 	mat4_mvp.set(this._camera.mat4_VP(this._gl, PERSPECTIVE, this.time.dT));
 	this._gl.viewport(0,0, this._gl.drawingBufferWidth, this._gl.drawingBufferHeight);
 
@@ -396,6 +389,18 @@ class Scene {
 	    }
         }
 
+	// Render particles
+	let mat4_model = new Matrix4();
+	let t_mat4_mvp = new Matrix4(mat4_mvp);
+	t_mat4_mvp.multiply(mat4_model);
+
+	for (let i =0; i< this._particle_sys.length; i++){
+	    this._use_shader(this._particle_sys[i].index);
+	    gl.bindBuffer(gl.ARRAY_BUFFER, this._particle_sys[i].buffer);
+	    bind_attrib(gl, 'a_Position', 3, gl.FLOAT, FSIZE*SIZE_PART, 0);
+	    this._particle_sys[i].render(gl, mat4_model, t_mat4_mvp); 
+	}
+	
 	this.__last_draw_stack__ = this.__draw_stack__;
     }
 

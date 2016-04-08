@@ -1,6 +1,6 @@
 "use strict";
 // Additional WebGL Utilities
-// Time-stamp: <2016-04-05 20:08:26>
+// Time-stamp: <2016-04-07 20:36:43>
 
 
 class vec3 {
@@ -20,12 +20,25 @@ class vec3 {
 	return this.elements[0];
     }
 
+    set x (v){
+	this.elements[0] = v; 
+    }
+
+    
     get y (){
 	return this.elements[1];
     }
 
+    set y (v){
+	this.elements[1] = v; 
+    }
+    
     get z (){
 	return this.elements[2];
+    }
+
+    set z (v){
+	this.elements[2] = v; 
     }
 
     get xyz(){

@@ -3,15 +3,18 @@
 
 var scene;
 function main() {
+    
     scene = new Scene(document.getElementById('webgl'));
     scene.defmat({
 	MAT_PEWTER: MATL_PEWTER,
-    });   
+    });
+    
     scene.defmesh({
-	mutable:{
-	    VMESH_PLANE : Plane(60,60, 10, 10, 100),
+	fixed:{
+	    MESH_PLANE : Plane(60,60, 2, 2, 100),
 	},
-    });   
+    });
+    
     scene.init({
 	lights:{
 	    blinn_phong:{
@@ -21,7 +24,7 @@ function main() {
 		    spec: [1.0, 1.0, 1.0],
 		    diff: [1.0, 1.0, 1.0],
 		},
-		L_HEADLIGHT:{
+		L_OVERHEAD2:{
 		    pos:  [6.0, -9.0, 8.0],
 		    ambi: [0.4, 0.4, 0.4],
 		    spec: [1.0, 1.0, 1.0],
@@ -29,8 +32,8 @@ function main() {
 		},
 	    }},
 	models: {
-	    DYNAMIC_PLANE :{
-		mesh : VMESH_PLANE,
+	    STATIC_PLANE :{
+		mesh : MESH_PLANE,
 		mat : MAT_PEWTER,
 		draw : TRIANGLE_STRIP
 	    },
@@ -42,6 +45,8 @@ function main() {
 	    perspective: 40,
 	},
     });
+
+    scene.add_particle_sys(200); 
 
     winResize();
 
@@ -62,27 +67,6 @@ function main() {
     main_loop();
 }
 
-function update_plane(options){
-    let displacement = options.displacement || false;
-    let height = options.height || false;
-
-    if(!displacement){
-        displacement = document.getElementById("displacement").innerHTML;
-        document.getElementById("displacement").innerHTML=displacement;
-        document.getElementById("height").innerHTML=height;
-    }
-    else if (!height){
-        height = document.getElementById("height").innerHTML;
-        document.getElementById("height").innerHTML=height;
-        document.getElementById("displacement").innerHTML=displacement;
-    }
-    scene.update({
-        meshes: {
-            VMESH_PLANE : Plane(60,60, displacement, height, 100),
-        },
-    });
-
-}
 
 function main_loop(){
     draw(scene);
@@ -96,12 +80,10 @@ function draw(scene) {
     let m_modelMatrix = new Matrix4(); // Model matrix
     pushMatrix(m_modelMatrix);
 
-
-    m_modelMatrix.setTranslate(-220,-60,-10);
+    m_modelMatrix.setTranslate(-0,-60,-10);
     m_modelMatrix.scale(2,2,2);    
     m_modelMatrix.rotate(90,0,0,1);
-
-    scene.draw(DYNAMIC_PLANE, m_modelMatrix);
+    scene.draw(STATIC_PLANE, m_modelMatrix);
 
 }
 
