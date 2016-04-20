@@ -1,10 +1,11 @@
-
 "use strict";
 
 var scene;
 function main() {
     
     scene = new Scene(document.getElementById('webgl'));
+    scene.fps = new FPS_Counter(document.getElementById("fps"));
+    
     scene.defmat({
 	MAT_PEWTER: MATL_PEWTER,
     });
@@ -14,6 +15,7 @@ function main() {
 	    MESH_PLANE : Plane(60,60, 2, 2, 100),
 	},
     });
+
     
     scene.init({
 	lights:{
@@ -46,7 +48,7 @@ function main() {
 	},
     });
 
-    scene.add_particle_sys(200); 
+    scene.add_particle_sys(100000); 
 
     winResize();
 
@@ -65,6 +67,8 @@ function main() {
     });
 
     main_loop();
+    
+    
 }
 
 

@@ -1,0 +1,53 @@
+
+
+
+
+/** A container for holding a  representation of two objects 
+    in contact */
+class Contact {
+    Constructor(){
+	this.particles = Array(2);
+	this.restitution;              // Normal restitution coefficient
+	this.normal = vec3.create();   // Direction of the contact
+    }
+
+    /** Resolve contact velocity & interpenetration */
+    _resolve(duration){
+	_resolve_velocity(duration);
+	_resolve_interpenetration(duration);
+    }
+
+    /** Calculates the separating veloicty at the contact */
+    _separating_velocity(){
+	return vec3.dot(vec3.sub(particle[0].v.xyz,
+				   particle[1].v.xyz),
+			  this.normal);
+    }
+
+    /** Handles impulse calcualations */
+    _resolve_velocity(duration){
+	let sep_v = _separating_velocity(); 
+	if(sep_v > 0) return;          // No impulse is required.
+
+	let sep_v1 = -sep_v * this.restitution;
+	let dV = sep_v1 - sep_v;
+
+	let i_mass_tot = particle[0].mass_inverse;
+	if (particle[1]) i_mass_tot += particle[1].mass_inverse;
+
+	if (i_mass_tot <= 0) return; // All particles have infinite mass
+
+	//impulse per unit of imass
+	let impulse_p_i_mass = vec3.scale(this.normal,
+					    (dV / i_mass_tot)); //impulse
+
+	particle[0].v  = vec3.add(particle[0].v,
+				  vec3.scale(impulse_p_i_mass, particle[0].imass)); 	
+    }
+
+    _resolve_interpenetration(duration){
+	
+    }
+}
+
+/**  */

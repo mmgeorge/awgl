@@ -1,7 +1,9 @@
-
-
+//http://www.html5rocks.com/en/tutorials/workers/basics/
 function map (fn, arr){
-    return arr.map(fn); 
+   // var t0 = new Worker("t0.js");
+   // w.onmessage = fn;
+   // w.postMessage(arr.buffer); 
+   return arr.map(fn); 
 }
 
 function reduce (fn, arr){

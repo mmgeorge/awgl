@@ -1,6 +1,6 @@
 "use strict";
 // Additional WebGL Utilities
-// Time-stamp: <2016-04-07 20:36:43>
+// Time-stamp: <2016-04-18 15:00:02>
 
 
 class vec3 {
@@ -100,7 +100,130 @@ class vec3 {
 	}
     }
 
+    static sub(va, b){
+	// Vector subtraction
+	if (typeof b === "object") {
+	    let tmp = new Float32Array(3);
+	    for (let x=0; x<3; x++){
+		tmp[x]=va.elements[x]-b.elements[x];
+	    }
+	    return new vec3(tmp[0], tmp[1], tmp[2]);
+	}
+	// Scalar subtraction
+	else {
+	    return new vec3(map(op("-", b), va.xyz));    
+	}
+    }
+
     static scale(vec, scalar){
 	return new vec3(map(op('*',scalar), vec.xyz)); 
     }
+
+    scale_eq (scalar){
+	this.x *= scalar;
+	this.y *= scalar;
+	this.z *= scalar;
+	return this;
+    }
+    
+    add_eq(vec){
+	this.x += vec.x;
+	this.y += vec.y;
+	this.z += vec.z; 
+    }
+
+    static dot(va, vb){
+	return va.x*vb.x + va.y*vb.y + va.z*vb.z; 
+    }
+
+    transform(mat){
+	// mat3 transform
+	if (mat.data.length = 9){
+	    this.x = this.x*mat.data[0] + this.y*mat.data[1] + this.z*mat.data[2];
+	    this.y = this.x*mat.data[3] + this.y*mat.data[4] + this.z*mat.data[5];
+	    this.z = this.x*mat.data[6] + this.y*mat.data[7] + this.z*mat.data[8];
+	}
+	// mat4 transform
+	else {
+	    this.x = this.x*mat.data[0] + this.y*mat.data[1] + this.z*mat.data[2] + data[3];
+	    this.y = this.x*mat.data[4] + this.y*mat.data[5] + this.z*mat.data[6] + data[7];
+	    this.z = this.x*mat.data[8] + this.y*mat.data[9] + this.z*mat.data[10] + data[11];
+	}
+    }
+
+    
+    
+}
+
+class vec3p {
+    constructor(buff,offset,init){
+	this.data = new Float32Array(buff, offset, 3);
+	this.data[0] = init[0];
+	this.data[1] = init[1];
+	this.data[2] = init[2];
+    }
+    
+    get x (){
+	return this.data[0];
+    }
+
+    set x (v){
+	this.data[0] = v; 
+    }
+    
+    get y (){
+	return this.data[1];
+    }
+
+    set y (v){
+	this.data[1] = v; 
+    }
+    
+    get z (){
+	return this.data[2];
+    }
+
+    set z (v){
+	this.data[2] = v; 
+    }
+
+    get xyz(){
+	return this.data; 
+    }
+
+    add_eq (vec){
+	this.x += vec.x;
+	this.y += vec.y;
+	this.z += vec.z;
+    }
+
+    scale_eq (scalar){
+	this.x *= scalar;
+	this.y *= scalar;
+	this.z *= scalar;
+    }
+
+    scale(scalar){
+	let nx = this.x * scalar;
+	let ny = this.y * scalar;
+	let nz = this.z * scalar;
+	
+	return new vec3(nx,ny,nz); 
+    }
+
+    transform(mat){
+	// mat3 transform
+	if (mat.data.length = 9){
+	    this.x = this.x*mat.data[0] + this.y*mat.data[1] + this.z*mat.data[2];
+	    this.y = this.x*mat.data[3] + this.y*mat.data[4] + this.z*mat.data[5];
+	    this.z = this.x*mat.data[6] + this.y*mat.data[7] + this.z*mat.data[8];
+	}
+	// mat4 transform
+	else {
+	    this.x = this.x*mat.data[0] + this.y*mat.data[1] + this.z*mat.data[2] + data[3];
+	    this.y = this.x*mat.data[4] + this.y*mat.data[5] + this.z*mat.data[6] + data[7];
+	    this.z = this.x*mat.data[8] + this.y*mat.data[9] + this.z*mat.data[10] + data[11];
+	}
+    }
+
 }

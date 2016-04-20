@@ -1,7 +1,7 @@
 
 /**
  * Fragment shader definitions for a WebGl system
- * Time-stamp: <2016-04-07 15:32:51>
+ * Time-stamp: <2016-04-12 10:36:28>
  */
 
 #ifndef READ_SRC // Suppress GLSLValidator Errors
@@ -37,7 +37,6 @@ uniform struct Light {
     vec3 specular;
 } light[NUM_LIGHTS];
 
-/** @Methods */
 vec3 find_normal(){
     vec3 dx = dFdx(v_Position.xyz);
     vec3 dy = dFdy(v_Position.xyz);
@@ -70,7 +69,6 @@ vec3 lighting_phong(int n_mat, vec3 pos, vec3 N){
     return emissive + ambient + diffuse + speculr;
 }
 
-/** @Entry */
 void main(){
     gl_FragColor = vec4(lighting_phong(u_matIndex,v_Position.xyz,find_normal()),1.0);
 }

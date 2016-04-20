@@ -1,0 +1,164 @@
+'use strict';
+// TODO: Pull MKS out to Scene
+
+/** Defintiions for a customizable Physics System */
+class Physics_Def {
+    constructor(opts){
+	let args = opts || {}; 
+	let gravity = args.gravity || -10; 
+	this.gravity = new vec3(0,gravity,0); 
+    }
+
+    /** Shorthand Accessors */
+    get g (){
+	return this.gravity; 
+    }
+}
+
+/** Definitions for a basic Particle system */
+class Particle_Sys {
+    constructor(scene, pcount){
+	this.offset = new vec3(-80,0,0);   /** TEMP */
+	
+	// Public 
+	this.particles =[];
+	this.forces = [];
+	this.constraints = []; 
+
+	// Private
+	this.index = scene._shaders.length; // Location of shdr in Scene vec
+	this._buff_glsl;
+	this._buff_s0 = new ArrayBuffer(SIZE_PART*FSIZE*pcount);
+	this._buff_s0dot;
+	this._buff_s1;
+	
+	//GLSL Hooks
+	this._uL_mat4_model;
+	this._uL_mat4_mvp;
+	
+	/** Initialization */
+	let gl = scene._gl;
+	scene._shaders.push(mk_shader(gl, VSHDR_PARTICLE_SOURCE, FHSDR_PARTICLE_SOURCE)); 
+	scene._use_shader(this.index);
+	this._uL_mat4_model = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
+	this._uL_mat4_mvp = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
+
+	// Pushback new particle
+	for (let i = pcount, j = 0; i > 0; i--, j+=(SIZE_PART*FSIZE)){
+	    this.particles.push(new Particle({
+		buffer   : this._buff_s0,
+		offset   : j,
+		position : [random_from_range(-10,10)+this.offset.x,
+			    random_from_range(-10,10)+this.offset.y,
+			    random_from_range(-10,10)+this.offset.z],
+		velocity : [0,0,-0.01],
+		force    : [0,0,0],
+		imass    : 0
+	    }));
+	}
+	this._buff_glsl = init_buffer(gl, this._buff_s0, gl.DYNAMIC_DRAW);
+    }
+        
+    /** nil -> vec3
+        Sum all of the forces acting on a given particle */
+    _calc_forces(){
+	let force_tot = new vec3.create();
+	for (let i =0; i< this.pF0.length; i++){
+	    force_tot.x += pF0[i].x;
+	    force_tot.y += pF0[i].y;
+	    force_tot.z += pF0[i].z;
+	}
+	return force_tot; 
+    }
+
+    /** nil -> nil
+        Calculates the time step of the current state */
+    _calc_sDot(){
+	let sDot = [];
+	
+    }
+
+    _solve(dT){
+	for (let i=0; i<this.particles.length; i++){
+	    this.particles[i].p.add_eq(this.particles[i].v.scale(dT)); 
+	}
+    }
+    
+    
+    /** webgl_context, mat4, mat4 -> nil
+        Render the particle system */
+    render(gl, dT, mat4_model, mat4_mvp){
+	let self = this;
+	// Get new context
+	this._solve(dT); 
+	// Bind & update buffer
+	gl.bindBuffer(gl.ARRAY_BUFFER, this._buff_glsl);
+	gl.bufferSubData(gl.ARRAY_BUFFER, 0, this._buff_s0); 
+	bind_attrib(gl, 'a_Position', 3, gl.FLOAT, FSIZE*SIZE_PART, 0);
+
+	gl.uniformMatrix4fv(self._uL_mat4_model, false, mat4_model.elements);
+	gl.uniformMatrix4fv(self._uL_mat4_mvp, false, mat4_mvp.elements);
+
+	gl.drawArrays(gl.POINTS, 0, this.particles.length);
+    }
+}
+
+var SIZE_PART = 10; 
+class Particle {
+    constructor(args){
+	let buffer = args.buffer;
+	let offset = args.offset;
+	let position = args.position; 
+	let velocity = args.velocity; 
+	let force = args.force;
+	let mass = args.mass;
+//	console.log(position);
+	// Public
+	this.position = new vec3p(buffer, offset, position);
+	this.velocity = new vec3p(buffer, offset+(3*FSIZE), velocity);
+	this.force = new vec3p(buffer, offset+(6*FSIZE), force);
+	this.imass = new Float32Array(buffer, offset+(9*FSIZE), 1);
+	if (mass) this.imass[0] = 1/mass;
+	else this.imass = 0; 
+
+	// Private
+	this._damping = 0.998; // Remove energy added by degeneracy
+    }
+    
+    /** Shorthand Accesors */
+    get p (){
+	return this.position; 
+    }
+    set p (v){
+	this.position = v; 
+    }
+    get v (){
+	return this.velocity; 
+    }
+    get f (){
+	return this.force;
+    }
+
+}
+
+class Force {
+    
+}
+
+class Constraint {
+    
+}
+
+function random_from_range(x,y){
+    return Math.random() * ((y-x) + x); 
+}
+
+/** 
+v1 = v0-grav
+v1 = v1 * drag
+pos1 = pos0 + v1
+bounce()
+ */
+
+/* explicit integrator *such as euler integration s1 = s0 + s0dot h or midpoint method  
+velocity verlo shader */

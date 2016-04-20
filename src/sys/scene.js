@@ -11,9 +11,6 @@ class Scene {
 	//public
 	this.canvas = canvas; 
 	this.time = new Time();
-	this.mat4_model = new Matrix4();
-	this.mat4_mvp = new Matrix4();
-	this.mat4_normal = new Matrix4();
 
 	//private
 	this._gl;
@@ -36,7 +33,8 @@ class Scene {
 	this.__draw_stack__;
 	this.__last_draw_stack__;
 	this._UI_ELEMENTS_ = Array(20);
-	
+	this.fps; 
+
 	//GLSL hooks
 	this._uL_mat4_model;
 	this._uL_mat4_mvp;
@@ -321,6 +319,7 @@ class Scene {
 	let gl = this._gl;
 	let mat4_mvp = new Matrix4();
 
+
 	// Use MODEL Program
 	this._use_shader(_SHDR.MODEL); 
 
@@ -328,7 +327,6 @@ class Scene {
 	this._gl.viewport(0,0, this._gl.drawingBufferWidth, this._gl.drawingBufferHeight);
 
         if(this._meshes_mutable){
-	    
             //Bind dynamic buffer
 	    gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers[1]);
 	    bind_attrib(gl, 'a_Position', 3, gl.FLOAT, FSIZE*3, 0);
@@ -360,8 +358,8 @@ class Scene {
 	        }   
             }
 	}
-        if(this._meshes_fixed){
-	    
+	
+        if(this._meshes_fixed){	    
             //Bind static buffer
 	    gl.bindBuffer(gl.ARRAY_BUFFER, this._buffers[0]);
 	    bind_attrib(gl, 'a_Position', 3, gl.FLOAT, FSIZE*3, 0);
@@ -396,11 +394,10 @@ class Scene {
 
 	for (let i =0; i< this._particle_sys.length; i++){
 	    this._use_shader(this._particle_sys[i].index);
-	    gl.bindBuffer(gl.ARRAY_BUFFER, this._particle_sys[i].buffer);
-	    bind_attrib(gl, 'a_Position', 3, gl.FLOAT, FSIZE*SIZE_PART, 0);
-	    this._particle_sys[i].render(gl, mat4_model, t_mat4_mvp); 
+	    this._particle_sys[i].render(gl, this.time.dT, mat4_model, t_mat4_mvp); 
 	}
-	
+	if (this.fps) this.fps.accum(this.time.dT); 
+	this.time.update();
 	this.__last_draw_stack__ = this.__draw_stack__;
     }
 
@@ -441,8 +438,8 @@ class Scene {
 		}
 	    }
 	}
-
     }
-
-    
 }
+
+
+
