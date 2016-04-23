@@ -1,6 +1,6 @@
 "use strict";
 // Additional WebGL Utilities
-// Time-stamp: <2016-04-18 15:00:02>
+// Time-stamp: <2016-04-21 23:28:55>
 
 
 class vec3 {
@@ -191,10 +191,24 @@ class vec3p {
 	return this.data; 
     }
 
+    static sub (a,b){
+	return new vec3(
+	    a.x - b.x,
+	    a.y - b.y,
+	    a.z - b.z
+	); 
+    }
+    
     add_eq (vec){
 	this.x += vec.x;
 	this.y += vec.y;
 	this.z += vec.z;
+    }
+
+    sub_eq (vec){
+	this.x -= vec.x;
+	this.y -= vec.y;
+	this.z -= vec.z;
     }
 
     scale_eq (scalar){

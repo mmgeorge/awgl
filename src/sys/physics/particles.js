@@ -1,5 +1,7 @@
 'use strict';
 // TODO: Pull MKS out to Scene
+//       Implement Force functions as eval("function") to gain
+//       better locality.
 
 /** Defintiions for a customizable Physics System */
 class Physics_Def {
@@ -18,7 +20,7 @@ class Physics_Def {
 /** Definitions for a basic Particle system */
 class Particle_Sys {
     constructor(scene, pcount){
-	this.offset = new vec3(-80,0,30);   /** TEMP */
+	this.offset = new vec3(-80,0,20);   /** TEMP */
 	
 	// Public 
 	this.particles =[];
@@ -42,23 +44,24 @@ class Particle_Sys {
 	this._uL_mat4_mvp = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
 
 	// Forces init
-	var F_Grav = function(pos){
-	    return new vec3([0,0,-0.000098]); 
-	};
-	
-	// Pushback new particle
+	var A = []; var B = []; 
 	for (let i = pcount, j = 0; i > 0; i--, j+=(SIZE_PART*FSIZE)){
-	    this.particles.push(new Particle({
+	    let part = new Particle({
 		buffer   : this._buff_s0,
 		offset   : j,
 		position : [random_from_range(-10,10)+this.offset.x,
 			    random_from_range(-10,10)+this.offset.y,
 			    random_from_range(-10,10)+this.offset.z],
 		velocity : [0.0,0.0,0],
-		forces   : [F_Grav],
 		mass    : 1.0
-	    }));
+	    });
+	    if (i % 2) A.push(part);
+	    else B.push(part);
+	    
+	    this.particles.push(part); 
 	}
+//	this.forces.push(new F_Grav(this.particles));
+	this.forces.push(new F_Spring(0.000000001, [0.0001,0.0001,0.0001], A, B)); 
 	this._buff_glsl = init_buffer(gl, this._buff_s0, gl.DYNAMIC_DRAW);
 
 	// Pushback ground constraint
@@ -70,6 +73,9 @@ class Particle_Sys {
     }
         
     _solve(dT){
+	for (let i=0; i<this.forces.length; i++){
+	    this.forces[i].apply(); 
+	}
 	for (let i=0; i<this.particles.length; i++){
 	    for (let j=0; j< this.constraints.length; j++){
 		if (this.constraints[j](this.particles[i]) &&
@@ -105,14 +111,13 @@ class Particle {
 	let buffer = args.buffer;
 	let offset = args.offset;
 	let position = args.position; 
-	let velocity = args.velocity; 
-	let forces = args.forces;
+	let velocity = args.velocity;
 	let mass = args.mass;
 //	console.log(position);
 	// Public
 	this.position = new vec3p(buffer, offset, position);
 	this.velocity = new vec3p(buffer, offset+(3*FSIZE), velocity);
-	this.forces = forces; //new vec3p(buffer, offset+(6*FSIZE), force);
+	this.ftot = new vec3p(buffer, offset+(6*FSIZE), [0,0,0]);
 
 	this.imass_buf = new Float32Array(buffer, offset+(9*FSIZE), 1);
 	if (mass) this.imass_buf[0] = 1/mass;
@@ -126,18 +131,9 @@ class Particle {
 	return  this.imass_buf[0];
     }
 
-    /** Apply forces to particle */
-    get acceleration(){
-	let ftot = vec3.create(); 
-	for (let i=0; i< this.forces.length; i++){
-	    ftot.add_eq(this.forces[i](this.position));	  
-	}
-	return ftot.scale_eq(this.imass);
-    }
-
     /** Mask for acceleration */
     get a(){
-	return this.acceleration; 
+	return this.ftot.scale(this.imass); 
     }
     
     /** Shorthand Accesors */
@@ -158,13 +154,51 @@ class Particle {
 
 class Force {
     constructor(fn){
-	this.fn; 
+	this._fn;
+	this._parts;
     }
 
-    apply(particle){
-	particle.p.add_eq(this.fn(particle)); 
+    apply(){
+	this._fn();  
     }
     
+}
+
+
+class F_Grav extends Force {
+    constructor(parts){
+	let self = super();
+	self._parts = parts; 
+	self._grav = new vec3([0,0,-0.000000098]); 
+	self._fn = function(){
+	    for (let i=0; i< this._parts.length; i++){
+		this._parts[i].ftot.add_eq(this._grav); 
+	    }
+	};
+    }
+}
+
+class F_Spring extends Force {
+    constructor(k, length, A, B){
+	let self = super();
+	self._k = k;
+	self._length = new vec3(length);
+	self._parts = A; 
+	self._B = B;
+	self._fn = function(){	    
+	    for (let i=0; i< self._parts.length; i++){
+		let F =
+		    vec3p.sub(
+			vec3p.sub(
+			    self._parts[i].position,
+			    self._B[i].position),
+			self._length)
+		    .scale_eq(self._k);
+		self._parts[i].ftot.sub_eq(F);
+		self._B[i].ftot.add_eq(F);
+	    }
+	};
+    }
 }
 
 /** class Gravity extends Force {

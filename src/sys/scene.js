@@ -400,46 +400,5 @@ class Scene {
 	this.time.update();
 	this.__last_draw_stack__ = this.__draw_stack__;
     }
-
-    _draw_hud(){
-	let mat4_mvp = new Matrix4();
-	let mat4_view = new Matrix4();
-
-	let zoom = 5;
-	let vpAspect = (this._gl.drawingBufferWidth)/(this._gl.drawingBufferHeight); 
-
-	if (vpAspect >= 1){ //When width > height
-	    mat4_mvp.setOrtho(-vpAspect*zoom, vpAspect*zoom,
-  			       -zoom, zoom, 	                          
-  			       0, 100);			 	
-	} else {
-	    mat4_mvp.setOrtho(-zoom, zoom, 	   	
-  			       -1/vpAspect*zoom, 1/vpAspect*zoom, 		 
-  			      0, 100);				
-	}
-
-	mat4_view.setLookAt( 6,0,0, 0,0,0, 0,0,1);
-	mat4_mvp = mat4_mvp.concat(mat4_view);
-
-	
-	for (let i=0; i< this._UI_ELEMENTS_.length; i++){
-	    let mat4_model = this._UI_ELEMENTS_[i];
-	    if (mat4_model){
-		let t_mat4_mvp = new Matrix4(mat4_mvp);
-		t_mat4_mvp.multiply(mat4_model);
-		this._gl.uniformMatrix4fv(this._uL_mat4_model, false, mat4_model.elements);
-		this._gl.uniformMatrix4fv(this._uL_mat4_mvp, false, t_mat4_mvp.elements);
-		let model = this._models[i];
-		let mesh_index = model.mesh_index;
-		if (mesh_index < this._begin_mut_mesh){
-		    model.draw(this._gl,
-			       this._uL_mat,
-			       this._meshes_fixed.get_start_end(mesh_index)); 
-		}
-	    }
-	}
-    }
 }
-
-
-
+ 

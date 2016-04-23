@@ -42,13 +42,13 @@ function main() {
 	},
 	camera: {
 	    position : [10.0,0.0,0.0],
-	    lookAt : [0.0,0.0,2.0],
+	    lookAt : [0.0,0.0,0.0],
 	    up : [0.0,0.0,1.0],
 	    perspective: 40,
 	},
     });
 
-    scene.add_particle_sys(5000); 
+    scene.add_particle_sys(1000); 
 
     winResize();
 
