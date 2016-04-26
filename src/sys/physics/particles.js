@@ -25,7 +25,8 @@ class Particle_Sys {
 	// Public 
 	this.particles =[];
 	this.forces = [];
-	this.constraints = []; 
+	this.constraints = [];
+	this.solver = 1;
 
 	// Private
 	this.index = scene._shaders.length; // Location of shdr in Scene vec
@@ -60,8 +61,8 @@ class Particle_Sys {
 	    
 	    this.particles.push(part); 
 	}
-//	this.forces.push(new F_Grav(this.particles));
-	this.forces.push(new F_Spring(0.000000001, [0.0001,0.0001,0.0001], A, B)); 
+	this.forces.push(new F_Grav(this.particles));
+	this.forces.push(new F_Spring(1, [1,1,1], A, B)); 
 	this._buff_glsl = init_buffer(gl, this._buff_s0, gl.DYNAMIC_DRAW);
 
 	// Pushback ground constraint
@@ -73,17 +74,39 @@ class Particle_Sys {
     }
         
     _solve(dT){
-	for (let i=0; i<this.forces.length; i++){
-	    this.forces[i].apply(); 
-	}
+	dT = dT/10000;
+	
+	// Apply Forces
+	for (let i=0; i<this.forces.length; i++)
+	    this.forces[i].apply();
+
+	// Apply Constraints
 	for (let i=0; i<this.particles.length; i++){
 	    for (let j=0; j< this.constraints.length; j++){
 		if (this.constraints[j](this.particles[i]) &&
 		    this.particles[i].v.z < 0)
 		    this.particles[i].v.scale_eq(-1); 
 	    }
-	    this.particles[i].v.add_eq(this.particles[i].a.scale_eq(dT));
-	    this.particles[i].p.add_eq(this.particles[i].v.scale(dT));
+	}
+	// Integrate
+	switch(this.solver){
+	case 0: // Euler
+	    for (let i=0; i<this.particles.length; i++){
+		this.particles[i].v.add_eq(this.particles[i].a.scale_eq(dT));
+		this.particles[i].p.add_eq(this.particles[i].v.scale(dT));
+	    }
+	    break;
+	case 1: // Midpoint
+	    for (let i=0; i<this.particles.length; i++){
+		// Store s1ss
+		let t_v1 = this.particles[i].v.add(this.particles[i].a.scale_eq(dT/2));
+	//	let t_p1 = this.particles[i].p.add(this.particles[i].v.scale(dT/2));
+		// Calculate sMdot as (s1/2)dot, add it
+		this.particles[i].v.add_eq(this.particles[i].a.scale_eq(dT));
+		this.particles[i].p.add_eq(t_v1.scale_eq(dT));
+		
+	    }
+	    break;
 	}
     }
     
@@ -164,12 +187,11 @@ class Force {
     
 }
 
-
 class F_Grav extends Force {
     constructor(parts){
 	let self = super();
 	self._parts = parts; 
-	self._grav = new vec3([0,0,-0.000000098]); 
+	self._grav = new vec3([0,0,-9.8]); 
 	self._fn = function(){
 	    for (let i=0; i< this._parts.length; i++){
 		this._parts[i].ftot.add_eq(this._grav); 
@@ -221,12 +243,4 @@ function random_from_range(x,y){
     return Math.random() * ((y-x) + x); 
 }
 
-/** 
-v1 = v0-grav
-v1 = v1 * drag
-pos1 = pos0 + v1
-bounce()
- */
 
-/* explicit integrator *such as euler integration s1 = s0 + s0dot h or midpoint method  
-velocity verlo shader */

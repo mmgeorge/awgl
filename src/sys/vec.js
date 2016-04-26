@@ -1,6 +1,6 @@
 "use strict";
 // Additional WebGL Utilities
-// Time-stamp: <2016-04-21 23:28:55>
+// Time-stamp: <2016-04-25 20:07:18>
 
 
 class vec3 {
@@ -205,6 +205,14 @@ class vec3p {
 	this.z += vec.z;
     }
 
+    add (vec){
+	return new vec3(
+	    this.x + vec.x,
+	    this.y + vec.y,
+	    this.z + vec.z
+	);
+    }
+    
     sub_eq (vec){
 	this.x -= vec.x;
 	this.y -= vec.y;
