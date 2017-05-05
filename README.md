@@ -45,8 +45,5 @@ The code creates three new global symbols--MESH_CUBE, MESH_SPHERE, and VMESH_PLA
 });
 ```
 
-### License
-MIT 
-
    [planeview]: <http://mmgeorge.github.io/planeview/>
   
